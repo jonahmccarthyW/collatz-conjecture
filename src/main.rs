@@ -46,8 +46,11 @@ fn main() {
 
     let duration = start_time.elapsed();
 
-    println!("Up to {}:", limit);
-    println!("- Most steps: number {} (took {} steps)", max_steps_num, max_steps);
-    println!("- Highest peak: number {} (reached peak value {})", max_peak_num, max_peak);
-    println!("- Time taken: {:?}", duration);
+    println!(
+    "Up to {}:
+- Most steps: {}, n = {}
+- Highest peak: {}, n = {}
+- Time taken: {:?}",
+    limit, max_steps, max_steps_num, max_peak, max_peak_num, duration
+);
 }
