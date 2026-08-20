@@ -1,37 +1,23 @@
+use rayon::prelude::*;
 use std::time::Instant;
 use thousands::Separable;
 
-fn find_max_peak(mut n: u64, cache: &mut Vec<Option<u64>>) -> u64 {
-    if let Some(Some(cached_peak)) = cache.get(n as usize) {
-        return *cached_peak;
-    }
-    
-    let original_n = n;
+fn get_peak(mut n: u64) -> u64 {
     let mut max_val = n;
     
-    while n > 1 {
-        if let Some(Some(cached_peak)) = cache.get(n as usize) {
-            if *cached_peak > max_val {
-                max_val = *cached_peak;
-            }
+    loop {
+        let zeros = n.trailing_zeros();
+        n >>= zeros;
+        
+        if n < 10 {
             break;
         }
         
-        if n % 2 == 0 {
-            n /= 2;
-        } else {
-            n = 3 * n + 1; 
-            
-            if n > max_val {
-                max_val = n;
-            }
-
-            n >>= 1; 
+        n = 3 * n + 1; 
+        
+        if n > max_val {
+            max_val = n;
         }
-    }
-    
-    if original_n < cache.len() as u64 {
-        cache[original_n as usize] = Some(max_val);
     }
     
     max_val
@@ -40,22 +26,25 @@ fn find_max_peak(mut n: u64, cache: &mut Vec<Option<u64>>) -> u64 {
 fn main() {
     let start_time = Instant::now();
 
-    let mut max_peak = 0;
-    let mut max_peak_num = 0;
+    // Goal: 10 Billion
+    let limit: u64 = 1_000_000_000; 
 
-    let limit = 100_000_000; //10_000_000_000
-
-    let mut cache = vec![None; limit + 1];
-    cache[1] = Some(1);
-
-    for i in 1..=limit {
-        let peak = find_max_peak(i as u64, &mut cache);
-        
-        if peak > max_peak {
-            max_peak = peak;
-            max_peak_num = i;
-        }
-    }
+    let (max_peak_num, max_peak) = (1..=(limit + 1) / 2)
+        .into_par_iter()
+        .map(|i| {
+            let odd_num = i * 2 - 1;
+            (odd_num, get_peak(odd_num))
+        })
+        .reduce(
+            || (0, 0),
+            |best_so_far, current| {
+                if current.1 > best_so_far.1 {
+                    current
+                } else {
+                    best_so_far
+                }
+            },
+        );
 
     let duration = start_time.elapsed();
 
