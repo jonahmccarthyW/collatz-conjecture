@@ -17,13 +17,16 @@ fn find_max_peak(mut n: u64, cache: &mut Vec<Option<u64>>) -> u64 {
             break;
         }
         
-        if n > max_val {
-            max_val = n;
-        }
         if n % 2 == 0 {
             n /= 2;
         } else {
-            n = 3 * n + 1;
+            n = 3 * n + 1; 
+            
+            if n > max_val {
+                max_val = n;
+            }
+
+            n >>= 1; 
         }
     }
     
@@ -40,9 +43,8 @@ fn main() {
     let mut max_peak = 0;
     let mut max_peak_num = 0;
 
-    let limit = 1000_000;
+    let limit = 100_000_000; //10_000_000_000
 
-    // Cache now stores only the peak value (u64) instead of a tuple
     let mut cache = vec![None; limit + 1];
     cache[1] = Some(1);
 
