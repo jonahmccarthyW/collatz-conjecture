@@ -2,15 +2,21 @@ use rayon::prelude::*;
 use std::time::Instant;
 use thousands::Separable;
 
-#[inline]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
+#[inline(always)]
 fn get_peak(mut n: u64) -> u64 {
     let original_n = n;
     let mut max_val = n;
-    
+
     loop {
         n = 3 * n + 1;
         
-        max_val = max_val.max(n);
+        if n > max_val {
+            max_val = n;
+        }
+        // max_val = max_val.max(n);
         
         n >>= n.trailing_zeros();
 
@@ -50,7 +56,7 @@ fn generate_valid_residues(m: u64) -> Vec<u64> {
 
 fn main() {
     let start_time = Instant::now();
-    let limit: u64 = 10_000_000_000; //pb: 3.7175303s m=24
+    let limit: u64 = 10_000_000_000; //pb: 1.0619438s m=24
     let m: u64 = 1 << 24; //check other values
     let valid_residues = generate_valid_residues(m);
     
