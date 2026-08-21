@@ -16,7 +16,6 @@ fn get_peak(mut n: u64) -> u64 {
         if n > max_val {
             max_val = n;
         }
-        // max_val = max_val.max(n);
         
         n >>= n.trailing_zeros();
 
@@ -28,7 +27,7 @@ fn get_peak(mut n: u64) -> u64 {
     max_val
 }
 
-fn generate_valid_residues(m: u64) -> Vec<u64> {
+fn generate_residues(m: u64) -> Vec<u64> {
     (0..m / 2)
         .into_par_iter()
         .map(|k| k * 2 + 1)
@@ -57,20 +56,20 @@ fn generate_valid_residues(m: u64) -> Vec<u64> {
 
 fn main() {
     let start_time = Instant::now();
-    let limit: u64 = 10_000_000_000; //pb: 970.8ms m=24
-    let m: u64 = 1 << 24; //check other values
-    let valid_residues = generate_valid_residues(m);
+    let limit: u64 = 10_000_000_000; //pb: 970.6056ms
+    let m: u64 = 1 << 24;
+    let residues = generate_residues(m);
     
     let full_chunks = limit / m;
 
-    let (mut max_peak_num, mut max_peak) = (0..full_chunks)
+    let (mut peak_num, mut peak) = (0..full_chunks)
         .into_par_iter()
         .fold(
             || (0, 0),
             |mut local_best, k| {
                 let base = k * m;
                 
-                for &r in &valid_residues {
+                for &r in &residues {
                     let n = base + r;
                     let p = get_peak(n);
                     if p > local_best.1 {
@@ -94,7 +93,7 @@ fn main() {
         );
 
     let final_base = full_chunks * m;
-    for &r in &valid_residues {
+    for &r in &residues {
         let n = final_base + r;
         
         if n > limit {
@@ -102,11 +101,11 @@ fn main() {
         }
         
         let p = get_peak(n);
-        if p > max_peak {
-            max_peak = p;
-            max_peak_num = n;
-        } else if p == max_peak && n < max_peak_num {
-            max_peak_num = n;
+        if p > peak {
+            peak = p;
+            peak_num = n;
+        } else if p == peak && n < peak_num {
+            peak_num = n;
         }
     }
 
@@ -117,8 +116,8 @@ fn main() {
 - Highest peak: {}, n = {}
 - Time taken: {:?}\n",
         limit.separate_with_commas(),
-        max_peak.separate_with_commas(),
-        max_peak_num.separate_with_commas(),
+        peak.separate_with_commas(),
+        peak_num.separate_with_commas(),
         duration
     );
 }
