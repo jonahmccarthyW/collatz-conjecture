@@ -53,8 +53,10 @@ fn main() {
     let limit: u64 = 10_000_000_000; //pb: 3.7175303s m=24
     let m: u64 = 1 << 24; //check other values
     let valid_residues = generate_valid_residues(m);
+    
+    let full_chunks = limit / m;
 
-    let (max_peak_num, max_peak) = (0..=(limit / m))
+    let (mut max_peak_num, mut max_peak) = (0..full_chunks)
         .into_par_iter()
         .fold(
             || (0, 0),
@@ -63,11 +65,6 @@ fn main() {
                 
                 for &r in &valid_residues {
                     let n = base + r;
-                    
-                    if n > limit {
-                        continue;
-                    }
-
                     let p = get_peak(n);
                     if p > local_best.1 {
                         local_best = (n, p);
@@ -88,6 +85,24 @@ fn main() {
                 }
             },
         );
+
+    // 2. Handle only the final partial chunk, breaking when we hit the limit
+    let final_base = full_chunks * m;
+    for &r in &valid_residues {
+        let n = final_base + r;
+        
+        if n > limit {
+            break; // Since valid_residues is sorted, we can stop entirely!
+        }
+        
+        let p = get_peak(n);
+        if p > max_peak {
+            max_peak = p;
+            max_peak_num = n;
+        } else if p == max_peak && n < max_peak_num {
+            max_peak_num = n;
+        }
+    }
 
     let duration = start_time.elapsed();
 
