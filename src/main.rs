@@ -30,8 +30,8 @@ fn generate_valid_residues(m: u64) -> Vec<u64> {
             let mut a = m;
             let mut b = i;
             
-            while a % 2 == 0 {
-                if b % 2 == 0 {
+            while (a & 1) == 0 {
+                if (b & 1) == 0 {
                     a >>= 1;
                     b >>= 1;
                 } else {
@@ -86,13 +86,12 @@ fn main() {
             },
         );
 
-    // 2. Handle only the final partial chunk, breaking when we hit the limit
     let final_base = full_chunks * m;
     for &r in &valid_residues {
         let n = final_base + r;
         
         if n > limit {
-            break; // Since valid_residues is sorted, we can stop entirely!
+            break;
         }
         
         let p = get_peak(n);
