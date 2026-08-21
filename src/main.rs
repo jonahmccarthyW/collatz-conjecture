@@ -36,27 +36,28 @@ fn generate_valid_residues(m: u64) -> Vec<u64> {
             let mut a = m;
             let mut b = i;
             
-            while (a & 1) == 0 {
-                if (b & 1) == 0 {
-                    a >>= 1;
-                    b >>= 1;
-                } else {
-                    a *= 3;
-                    b = 3 * b + 1;
-                }
+            loop {
+                let tz = (a | b).trailing_zeros();
+                a >>= tz;
+                b >>= tz;
                 
                 if a < m {
                     return false;
                 }
+                if (a & 1) != 0 {
+                    return true;
+                }
+
+                a *= 3;
+                b = 3 * b + 1;
             }
-            true
         })
         .collect()
 }
 
 fn main() {
     let start_time = Instant::now();
-    let limit: u64 = 10_000_000_000; //pb: 1.0619438s m=24
+    let limit: u64 = 10_000_000_000; //pb: 970.8ms m=24
     let m: u64 = 1 << 24; //check other values
     let valid_residues = generate_valid_residues(m);
     
