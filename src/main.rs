@@ -10,9 +10,7 @@ fn get_peak(mut n: u64) -> u64 {
     loop {
         n = 3 * n + 1;
         
-        if n > max_val {
-            max_val = n;
-        }
+        max_val = max_val.max(n);
         
         n >>= n.trailing_zeros();
 
@@ -25,43 +23,35 @@ fn get_peak(mut n: u64) -> u64 {
 }
 
 fn generate_valid_residues(m: u64) -> Vec<u64> {
-    let mut allowed = vec![false; m as usize];
-
-    for i in (1..m).step_by(2) {
-        let mut a = m;
-        let mut b = i;
-        let mut drops = false;
-
-        while a % 2 == 0 {
-            if b % 2 == 0 {
-                a /= 2;
-                b /= 2;
-            } else {
-                a *= 3;
-                b = 3 * b + 1;
-            }
+    (0..m / 2)
+        .into_par_iter()
+        .map(|k| k * 2 + 1)
+        .filter(|&i| {
+            let mut a = m;
+            let mut b = i;
             
-            if a < m {
-                drops = true;
-                break;
+            while a % 2 == 0 {
+                if b % 2 == 0 {
+                    a >>= 1;
+                    b >>= 1;
+                } else {
+                    a *= 3;
+                    b = 3 * b + 1;
+                }
+                
+                if a < m {
+                    return false;
+                }
             }
-        }
-        if !drops {
-            allowed[i as usize] = true;
-        }
-    }
-
-    allowed
-        .into_iter()
-        .enumerate()
-        .filter_map(|(i, is_valid)| if is_valid { Some(i as u64) } else { None })
+            true
+        })
         .collect()
 }
 
 fn main() {
     let start_time = Instant::now();
-    let limit: u64 = 10_000_000_000; //pb: 3.7623415s
-    let m: u64 = 1 << 20; //check other values
+    let limit: u64 = 10_000_000_000; //pb: 3.7175303s m=24
+    let m: u64 = 1 << 24; //check other values
     let valid_residues = generate_valid_residues(m);
 
     let (max_peak_num, max_peak) = (0..=(limit / m))
@@ -75,9 +65,6 @@ fn main() {
                     let n = base + r;
                     
                     if n > limit {
-                        continue;
-                    }
-                    if n < 10 {
                         continue;
                     }
 
