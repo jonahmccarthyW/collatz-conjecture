@@ -27,12 +27,12 @@ fn get_peak(mut n: u64) -> u64 {
 }
 
 fn generate_residues(m: u64) -> Vec<u64> {
-    (0..m / 2)
+    (0..m / 4)
         .into_par_iter()
-        .map(|k| k * 2 + 1)
+        .map(|k| k * 4 | 3)
         .filter(|&i| {
-            let mut a = m;
-            let mut b = i;
+            let mut a = m * 3;
+            let mut b = 3 * i + 1;
             
             loop {
                 let tz = (a | b).trailing_zeros();
@@ -55,7 +55,7 @@ fn generate_residues(m: u64) -> Vec<u64> {
 
 fn main() {
     let start_time = Instant::now();
-    let limit: u64 = 10_000_000_000; //pb: 956.075ms
+    let limit: u64 = 10_000_000_000; //pb: 932.5828ms
     let m: u64 = 1 << 24;
     let residues = generate_residues(m);
     
@@ -84,7 +84,7 @@ fn main() {
                 if current.1 > best.1 {
                     current
                 } else if current.1 == best.1 {
-                    if best.0 == 0 || current.0 < best.0 { current } else { best }
+                    current
                 } else {
                     best
                 }
@@ -102,8 +102,6 @@ fn main() {
         let p = get_peak(n);
         if p > peak {
             peak = p;
-            peak_num = n;
-        } else if p == peak && n < peak_num {
             peak_num = n;
         }
     }
