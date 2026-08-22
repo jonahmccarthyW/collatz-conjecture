@@ -8,9 +8,12 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 #[inline(always)]
 fn get_peak(mut n: u64) -> u64 {
     let original_n = n;
+    
+    n = 3 * n + 1;
     let mut max_val = n;
+    n >>= n.trailing_zeros();
 
-    loop {
+    while n >= original_n {
         n = 3 * n + 1;
         
         if n > max_val {
@@ -18,10 +21,6 @@ fn get_peak(mut n: u64) -> u64 {
         }
         
         n >>= n.trailing_zeros();
-
-        if n < original_n {
-            break;
-        }
     }
     
     max_val
@@ -56,7 +55,7 @@ fn generate_residues(m: u64) -> Vec<u64> {
 
 fn main() {
     let start_time = Instant::now();
-    let limit: u64 = 10_000_000_000; //pb: 970.6056ms
+    let limit: u64 = 10_000_000_000; //pb: 956.075ms
     let m: u64 = 1 << 24;
     let residues = generate_residues(m);
     
@@ -70,7 +69,7 @@ fn main() {
                 let base = k * m;
                 
                 for &r in &residues {
-                    let n = base + r;
+                    let n = base | r;
                     let p = get_peak(n);
                     if p > local_best.1 {
                         local_best = (n, p);
@@ -94,7 +93,7 @@ fn main() {
 
     let final_base = full_chunks * m;
     for &r in &residues {
-        let n = final_base + r;
+        let n = final_base | r;
         
         if n > limit {
             break;
