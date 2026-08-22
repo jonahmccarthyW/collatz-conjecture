@@ -55,8 +55,8 @@ fn generate_residues(m: u64) -> Vec<u64> {
 
 fn main() {
     let start_time = Instant::now();
-    let limit: u64 = 10_000_000_000; //pb: 918.3018ms
-    let m: u64 = 1 << 24;
+    let limit: u64 = 10_000_000_000; //pb: 901.3939ms m=26
+    let m: u64 = 1 << 26;
     let residues = generate_residues(m);
     
     let full_chunks = limit / m;
