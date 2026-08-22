@@ -55,7 +55,7 @@ fn generate_residues(m: u64) -> Vec<u64> {
 
 fn main() {
     let start_time = Instant::now();
-    let limit: u64 = 10_000_000_000; //pb: 932.5828ms
+    let limit: u64 = 10_000_000_000; //pb: 918.3018ms
     let m: u64 = 1 << 24;
     let residues = generate_residues(m);
     
@@ -83,7 +83,7 @@ fn main() {
             |best, current| {
                 if current.1 > best.1 {
                     current
-                } else if current.1 == best.1 {
+                } else if current.1 == best.1 && current.0 < best.0 {
                     current
                 } else {
                     best
