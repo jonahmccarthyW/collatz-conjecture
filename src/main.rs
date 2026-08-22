@@ -37,33 +37,80 @@ const POW3: [u64; 65] = {
 //     5069619362125685561, 15208858086377056683, 8733086111712066817
 // ];
 
+#[derive(Copy, Clone)]
+struct CollatzJump {
+    p: u32,       // Number of odd steps (3^p)
+    constant_final: u64,
+    multiplier_peak: u64,
+    constant_peak: u64,
+}
+
+const BITS: u32 = 12;
+const LUT_SIZE: usize = 1 << BITS;
+
+const fn generate_lut() -> [CollatzJump; LUT_SIZE] {
+    let mut lut = [CollatzJump { p: 0, constant_final: 0, multiplier_peak: 0, constant_peak: 0 }; LUT_SIZE];
+    let mut r = 0;
+    
+    while r < LUT_SIZE {
+        let mut m: u64 = 1 << BITS;
+        let mut c: u64 = r as u64;
+        
+        let mut divisions = 0;
+        let mut odd_steps = 0;
+        
+        let mut m_peak = m;
+        let mut c_peak = c;
+        
+        while divisions < BITS {
+            if c % 2 == 0 {
+                c >>= 1;
+                m >>= 1;
+                divisions += 1;
+            } else {
+                c = 3 * c + 1;
+                m = 3 * m;
+                odd_steps += 1;
+                
+                if m > m_peak || (m == m_peak && c > c_peak) {
+                    m_peak = m;
+                    c_peak = c;
+                }
+            }
+        }
+        
+        lut[r] = CollatzJump {
+            p: odd_steps,
+            constant_final: c,
+            multiplier_peak: m_peak,
+            constant_peak: c_peak,
+        };
+        
+        r += 1;
+    }
+    lut
+}
+
+static JUMP_LUT: [CollatzJump; LUT_SIZE] = generate_lut();
+
 #[inline(always)]
 fn get_peak(mut n: u64) -> u64 {
     let original_n = n;
     let mut max_val = n;
 
     loop {
-        let n_plus_1 = n + 1;
-        let k = n_plus_1.trailing_zeros();
+        let r = (n & 0xFFF) as usize;
+        let a = n >> BITS;
         
-        if k >= 6 { 
-            let p3 = unsafe { *POW3.get_unchecked(k as usize) };
-            let a = n_plus_1 >> k;
-            let peak = (a.wrapping_mul(p3) << 1) - 2;
-            
-            if peak > max_val {
-                max_val = peak;
-            }
-            
-            n = a.wrapping_mul(p3) - 1;
-        } else {
-            n = 3 * n + 1;
-            if n > max_val {
-                max_val = n;
-            }
+        let jump = unsafe { JUMP_LUT.get_unchecked(r) };
+        
+        let local_peak = a.wrapping_mul(jump.multiplier_peak).wrapping_add(jump.constant_peak);
+        if local_peak > max_val {
+            max_val = local_peak;
         }
         
-        n >>= n.trailing_zeros();
+        let p3 = unsafe { *POW3.get_unchecked(jump.p as usize) };
+        n = a.wrapping_mul(p3).wrapping_add(jump.constant_final);
         
         if n < original_n {
             break;
@@ -73,6 +120,7 @@ fn get_peak(mut n: u64) -> u64 {
     max_val
 }
 
+// ~30ms pre-computation
 fn generate_residues(m: u64) -> Vec<u64> {
     (0..m / 4)
         .into_par_iter()
@@ -102,7 +150,7 @@ fn generate_residues(m: u64) -> Vec<u64> {
 
 fn main() {
     let start_time = Instant::now();
-    let limit: u64 = 10_000_000_000; //pb: 873.2629ms
+    let limit: u64 = 10_000_000_000; //pb: 495.4392ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
     let m: u64 = 1 << 26;
     let residues = generate_residues(m);
     
