@@ -5,10 +5,10 @@ use thousands::Separable;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-const BITS: u32 = 12;
+const BITS: u32 = 10;
 const LUT_SIZE: usize = 1 << BITS;
 const MASK: u64 = (1 << BITS) - 1;
-const CHUNK_POWER: u32 = 26;
+const CHUNK_POWER: u32 = 24;
 const CHUNK_SIZE: u64 = 1 << CHUNK_POWER;
 
 // Precomputed powers of 3.
@@ -114,9 +114,7 @@ fn generate_residues(m: u64) -> Vec<u64> {
                 a >>= tz;
                 b >>= tz;
                 
-                if a < m {
-                    return false;
-                 }
+                if a < m { return false; }
                 if (a & 1) != 0 { return true; }
 
                 a *= 3;
@@ -170,16 +168,14 @@ fn find_highest_peak(limit: u64) -> (u64, u64) {
             peak_num = n;
         }
     }
-
     (peak_num, peak)
 }
 
 
 fn main() {
-    let limit: u64 = 10_000_000_000; //pb: 479.0305ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
+    let limit: u64 = 10_000_000_000; //pb: 431.3827ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
     
     let start_time = Instant::now();
-    
     let (peak_num, peak) = find_highest_peak(limit);
     let duration = start_time.elapsed();
 
