@@ -11,49 +11,34 @@ const MASK: u64 = (1 << BITS) - 1;
 const CHUNK_POWER: u32 = 24;
 const CHUNK_SIZE: u64 = 1 << CHUNK_POWER;
 
-// Precomputed powers of 3.
-const POW3: [u64; 65] = {
-    let mut arr = [0; 65];
-    let mut i = 0;
-    let mut current: u64 = 1;
-    while i < 65 {
-        arr[i] = current;
-        current = current.wrapping_mul(3);
-        i += 1;
-    }
-    arr
-};
 
 #[derive(Copy, Clone)]
 struct CollatzJump {
-    p: u32, // Number of odd steps (3^p)
+    multiplier_final: u64,
     constant_final: u64,
     multiplier_peak: u64,
     constant_peak: u64,
 }
 
-// Generate the 12-bit LUT
 const fn generate_lut() -> [CollatzJump; LUT_SIZE] {
-    let mut lut = [CollatzJump { p: 0, constant_final: 0, multiplier_peak: 0, constant_peak: 0 }; LUT_SIZE];
+    let mut lut = [CollatzJump { multiplier_final: 0, constant_final: 0, multiplier_peak: 0, constant_peak: 0 }; LUT_SIZE];
     let mut r = 0;
     
     while r < LUT_SIZE {
         let mut m: u64 = 1 << BITS;
         let mut c: u64 = r as u64;
         let mut divisions = 0;
-        let mut odd_steps = 0;
         let mut m_peak = m;
         let mut c_peak = c;
         
         while divisions < BITS {
-            if c % 2 == 0 {
+            if (c & 1) == 0 {
                 c >>= 1;
                 m >>= 1;
                 divisions += 1;
             } else {
                 c = 3 * c + 1;
                 m = 3 * m;
-                odd_steps += 1;
                 
                 if m > m_peak || (m == m_peak && c > c_peak) {
                     m_peak = m;
@@ -63,7 +48,7 @@ const fn generate_lut() -> [CollatzJump; LUT_SIZE] {
         }
         
         lut[r] = CollatzJump { 
-            p: odd_steps, 
+            multiplier_final: m, 
             constant_final: c, 
             multiplier_peak: m_peak, 
             constant_peak: c_peak };
@@ -90,8 +75,7 @@ fn get_peak(mut n: u64) -> u64 {
             max_val = local_peak;
         }
         
-        let p3 = unsafe { *POW3.get_unchecked(jump.p as usize) };
-        n = a.wrapping_mul(p3).wrapping_add(jump.constant_final);
+        n = a.wrapping_mul(jump.multiplier_final).wrapping_add(jump.constant_final);
         
         if n < original_n {
             break;
@@ -101,11 +85,11 @@ fn get_peak(mut n: u64) -> u64 {
     max_val
 }
 
-// ~30ms pre-computation
+// ~8.8ms pre-computation
 fn generate_residues(m: u64) -> Vec<u64> {
-    (0..m / 4)
+    (0..m >> 2)
         .into_par_iter()
-        .map(|k| k * 4 | 3)
+        .map(|k| (k << 2) | 3)
         .filter(|&i| {
             let mut a = m * 3;
             let mut b = 3 * i + 1;
@@ -156,6 +140,7 @@ fn find_highest_peak(limit: u64) -> (u64, u64) {
             },
         );
 
+    // Process the final partial chunk sequentially
     let final_base = full_chunks * CHUNK_SIZE;
     for &r in &residues {
         let n = final_base | r;
@@ -173,7 +158,7 @@ fn find_highest_peak(limit: u64) -> (u64, u64) {
 
 
 fn main() {
-    let limit: u64 = 10_000_000_000; //pb: 431.3827ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
+    let limit: u64 = 10_000_000_000; //pb: 376.4742ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
     
     let start_time = Instant::now();
     let (peak_num, peak) = find_highest_peak(limit);
