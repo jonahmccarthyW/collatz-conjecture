@@ -113,8 +113,8 @@ fn find_highest_peak(limit: u64) -> (u64, u64) {
 
     // Parallelise over residues
     residues
-        .into_par_iter()
-        .map(|r| {
+        .par_iter()
+        .map(|&r| {
             let mut best_n = 0;
             let mut best_p = 0;
             let mut n = r;
@@ -140,9 +140,7 @@ fn find_highest_peak(limit: u64) -> (u64, u64) {
 
             (best_n, best_p)
         })
-        .max_by(|a, b| {
-            a.1.cmp(&b.1).then_with(|| b.0.cmp(&a.0))
-        })
+        .max_by(|a, b| a.1.cmp(&b.1).then_with(|| b.0.cmp(&a.0)))
         .unwrap_or((0, 0))
 }
 
