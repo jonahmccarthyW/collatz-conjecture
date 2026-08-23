@@ -113,8 +113,8 @@ fn find_highest_peak(limit: u64) -> (u64, u64) {
 
     // Parallelise over residues
     residues
-        .par_iter()
-        .map(|&r| {
+        .into_par_iter()
+        .map(|r| {
             let mut best_n = 0;
             let mut best_p = 0;
             let mut n = r;
@@ -140,21 +140,15 @@ fn find_highest_peak(limit: u64) -> (u64, u64) {
 
             (best_n, best_p)
         })
-        .reduce(
-            || (0, 0),
-            |best, current| {
-                if current.1 > best.1 || (current.1 == best.1 && current.0 < best.0) {
-                    current
-                } else {
-                    best
-                }
-            },
-        )
+        .max_by(|a, b| {
+            a.1.cmp(&b.1).then_with(|| b.0.cmp(&a.0))
+        })
+        .unwrap_or((0, 0))
 }
 
 
 fn main() {
-    let limit: u64 = 10_000_000_000; //pb: 349.8228ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
+    let limit: u64 = 10_000_000_000; //pb: 339.7492ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
     
     let start_time = Instant::now();
     let (peak_num, peak) = find_highest_peak(limit);
