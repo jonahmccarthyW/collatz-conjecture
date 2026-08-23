@@ -11,7 +11,6 @@ const MASK: u64 = (1 << BITS) - 1;
 const CHUNK_POWER: u32 = 24;
 const CHUNK_SIZE: u64 = 1 << CHUNK_POWER;
 
-
 #[derive(Copy, Clone)]
 struct CollatzJump {
     multiplier_final: u64,
@@ -112,23 +111,35 @@ fn find_highest_peak(limit: u64) -> (u64, u64) {
     let residues = generate_residues(CHUNK_SIZE);
     let full_chunks = limit / CHUNK_SIZE;
 
-    // Process full chunks in parallel
-    let (mut peak_num, mut peak) = (0..full_chunks)
-        .into_par_iter()
-        .fold(
-            || (0, 0),
-            |mut local_best, k| {
-                let base = k * CHUNK_SIZE;
-                for &r in &residues {
-                    let n = base | r;
-                    let p = get_peak(n);
-                    if p > local_best.1 {
-                        local_best = (n, p);
-                    }
+    // Parallelise over residues
+    residues
+        .par_iter()
+        .map(|&r| {
+            let mut best_n = 0;
+            let mut best_p = 0;
+            let mut n = r;
+
+            // Process all full chunks for this residue
+            for _ in 0..full_chunks {
+                let p = get_peak(n);
+                if p > best_p {
+                    best_p = p;
+                    best_n = n;
                 }
-                local_best
-            },
-        )
+                n += CHUNK_SIZE;
+            }
+
+            // Check the partial chunk
+            if n <= limit {
+                let p = get_peak(n);
+                if p > best_p {
+                    best_p = p;
+                    best_n = n;
+                }
+            }
+
+            (best_n, best_p)
+        })
         .reduce(
             || (0, 0),
             |best, current| {
@@ -138,27 +149,12 @@ fn find_highest_peak(limit: u64) -> (u64, u64) {
                     best
                 }
             },
-        );
-
-    // Process the final partial chunk sequentially
-    let final_base = full_chunks * CHUNK_SIZE;
-    for &r in &residues {
-        let n = final_base | r;
-        if n > limit { 
-            break; 
-        }
-        let p = get_peak(n);
-        if p > peak {
-            peak = p;
-            peak_num = n;
-        }
-    }
-    (peak_num, peak)
+        )
 }
 
 
 fn main() {
-    let limit: u64 = 10_000_000_000; //pb: 376.4742ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
+    let limit: u64 = 10_000_000_000; //pb: 349.8228ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
     
     let start_time = Instant::now();
     let (peak_num, peak) = find_highest_peak(limit);
