@@ -146,7 +146,7 @@ fn find_highest_peak(limit: u64) -> (u64, u64) {
 
 
 fn main() {
-    let limit: u64 = 10_000_000_000; //pb: 339.7492ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
+    let limit: u64 = 10_000_000_000; //pb: 337.9255ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
     
     let start_time = Instant::now();
     let (best_n, best_peak) = find_highest_peak(limit);
