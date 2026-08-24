@@ -69,9 +69,9 @@ fn get_peak(mut n: u64) -> u64 {
         
         let jump = unsafe { JUMP_LUT.get_unchecked(r) };
         
-        let local_peak = a.wrapping_mul(jump.multiplier_peak).wrapping_add(jump.constant_peak);
-        if local_peak > max_val {
-            max_val = local_peak;
+        let peak = a.wrapping_mul(jump.multiplier_peak).wrapping_add(jump.constant_peak);
+        if peak > max_val {
+            max_val = peak;
         }
         
         n = a.wrapping_mul(jump.multiplier_final).wrapping_add(jump.constant_final);
@@ -149,7 +149,7 @@ fn main() {
     let limit: u64 = 10_000_000_000; //pb: 339.7492ms, Highest peak: 18,144,594,937,356,598,024, n = 8,528,817,511
     
     let start_time = Instant::now();
-    let (peak_num, peak) = find_highest_peak(limit);
+    let (best_n, best_peak) = find_highest_peak(limit);
     let duration = start_time.elapsed();
 
     println!(
@@ -157,8 +157,8 @@ fn main() {
 - Highest peak: {} (Found at n = {})
 - Time taken:   {:?}\n",
         limit.separate_with_commas(),
-        peak.separate_with_commas(),
-        peak_num.separate_with_commas(),
+        best_peak.separate_with_commas(),
+        best_n.separate_with_commas(),
         duration
     );
 }
