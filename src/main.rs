@@ -13,10 +13,10 @@ const CHUNK_SIZE: u64 = 1 << CHUNK_POWER;
 
 #[derive(Copy, Clone)]
 struct CollatzJump {
-    multiplier_final: u64,
-    constant_final: u64,
-    multiplier_peak: u64,
-    constant_peak: u64,
+    multiplier_final: u32,
+    constant_final: u32,
+    multiplier_peak: u32,
+    constant_peak: u32,
 }
 
 const fn generate_lut() -> [CollatzJump; LUT_SIZE] {
@@ -47,10 +47,10 @@ const fn generate_lut() -> [CollatzJump; LUT_SIZE] {
         }
         
         lut[r] = CollatzJump { 
-            multiplier_final: m, 
-            constant_final: c, 
-            multiplier_peak: m_peak, 
-            constant_peak: c_peak };
+            multiplier_final: m as u32,
+            constant_final: c as u32,
+            multiplier_peak: m_peak as u32,
+            constant_peak: c_peak as u32 };
         r += 1;
     }
     lut
@@ -69,12 +69,12 @@ fn get_peak(mut n: u64) -> u64 {
         
         let jump = unsafe { JUMP_LUT.get_unchecked(r) };
         
-        let peak = a.wrapping_mul(jump.multiplier_peak).wrapping_add(jump.constant_peak);
+        let peak = a.wrapping_mul(jump.multiplier_peak as u64).wrapping_add(jump.constant_peak as u64);
         if peak > max_val {
             max_val = peak;
         }
         
-        n = a.wrapping_mul(jump.multiplier_final).wrapping_add(jump.constant_final);
+        n = a.wrapping_mul(jump.multiplier_final as u64).wrapping_add(jump.constant_final as u64);
         
         if n < original_n {
             break;
